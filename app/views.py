@@ -8,7 +8,7 @@ import os
 from app import app
 from flask import render_template, request, redirect, url_for, flash, session, abort
 from werkzeug.utils import secure_filename
-
+from .forms import UploadForm
 
 ###
 # Routing for your application.
@@ -32,15 +32,21 @@ def upload():
         abort(401)
 
     # Instantiate your form class
+    form = UploadForm()
+    if request.method == 'GET':
+         #f = uploadform.photo.data
+        return render_template('upload.html',form=form)
 
     # Validate file upload on submit
-    if request.method == 'POST':
+    if request.method == 'POST' and form.validate_on_submit():
         # Get file data and save to your uploads folder
-
+        file = request.files['photo'] 
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         flash('File Saved', 'success')
         return redirect(url_for('home'))
 
-    return render_template('upload.html')
+    #return render_template('upload.html')
 
 
 @app.route('/login', methods=['POST', 'GET'])
@@ -63,6 +69,20 @@ def logout():
     flash('You were logged out', 'success')
     return redirect(url_for('home'))
 
+
+import os
+def get_uploaded_images():
+    a=[]
+    rootdir = os.getcwd()
+    print (rootdir)
+    for subdir, dirs, files in os.walk(rootdir + app.config['UPLOAD_FOLDER']):
+        for file in files:
+            a.append(file)
+    return a
+
+@app.route('/files')
+def files():
+    return render_template('files.html',pics = get_uploaded_images())
 
 ###
 # The functions below should be applicable to all Flask apps.
